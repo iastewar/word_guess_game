@@ -1,0 +1,7 @@
+To compile:
+javac WordGuessServer.java
+javac WordGuessClient.java
+
+To run:
+java WordGuessServer <port>
+java WordGuessClient <server IP> <server port>
