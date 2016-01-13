@@ -16,11 +16,11 @@ public class WordGuessServer {
 	
 	private static class Player {
 		String playerSocketString;
-		String playerName;		
+		int playerNum;		
 		
-		Player(String playerSocketString, String playerName) {
+		Player(String playerSocketString, int playerNum) {
 			this.playerSocketString = playerSocketString;
-			this.playerName = playerName;			
+			this.playerNum = playerNum;			
 		}		
 	}
 	
@@ -53,7 +53,7 @@ public class WordGuessServer {
         boolean gameStarted = false;     
         String gameStartedBy = "";
         ArrayList<Player> players = new ArrayList<Player>();
-        String gameLog = "Game Log (last 1000 characters):\nGame has not started yet\n";
+        String gameLog = "LG\nGN\n";
         
         // Initialize the selector
         Selector selector = Selector.open();
@@ -106,8 +106,8 @@ public class WordGuessServer {
                         
                         clientsConnected++;
                         playerNumber++;
-                        players.add(new Player(cchannel.socket().toString(), "Player " + playerNumber));
-                        gameLog += "Player " + playerNumber + " connected\n";
+                        players.add(new Player(cchannel.socket().toString(), playerNumber));
+                        gameLog += "PC" + playerNumber + "\n";
                         
                     } 
                     else
@@ -151,7 +151,7 @@ public class WordGuessServer {
                             
                             else if (line.startsWith("ng-")) {
                             	if (clientsConnected < 2) {
-                            		outputLine = "Need at least 2 players to start game\n";
+                            		outputLine = "NP\n";
                             		outBuffer=ByteBuffer.wrap(outputLine.getBytes()); 
                                     bytesSent = cchannel.write(outBuffer);
                             	} else {                            		                          		
@@ -159,17 +159,17 @@ public class WordGuessServer {
                             		gameStarted = true;
                             		guessWord = line.substring(3);
                             		
-                            		String playerName = "";
+                            		int playerNum = -1;
                             		for (Player p : players) {
                             			if (p.playerSocketString.equals(cchannel.socket().toString())) {
-                            				playerName = p.playerName;
+                            				playerNum = p.playerNum;
                             				break;
                             			}
                             		}
-                            		outputLine = playerName + ": Game has started with a word of length " + (guessWord.length()-1) +"\n";
+                            		outputLine = "GS" + playerNum + "-" + (guessWord.length()-1) +"\n";
                             		gameLog += outputLine; // add output line to game log
-                            		if (gameLog.length() > 1000)
-                            			gameLog = gameLog.substring(0, 33) + gameLog.substring(gameLog.length()-977, gameLog.length()); // make gameLog at max 1000 characters
+                            		if (gameLog.length() > 100)
+                            			gameLog = gameLog.substring(0, 3) + gameLog.substring(gameLog.length()-97, gameLog.length()); // make gameLog at max 100 characters
                             		outBuffer=ByteBuffer.wrap(gameLog.getBytes()); 
                                     bytesSent = cchannel.write(outBuffer);
                                                                      
@@ -181,27 +181,27 @@ public class WordGuessServer {
                             
                             else if (line.equals("logout\n")) {
                             	clientsConnected--;
-                            	String playerName = "";
+                            	int playerNum = -1;
                         		for (int i = 0; i < players.size(); i++) {
                         			if (players.get(i).playerSocketString.equals(cchannel.socket().toString())) {
-                        				playerName = players.get(i).playerName;
+                        				playerNum = players.get(i).playerNum;
                         				players.remove(i);
                         				break;
                         			}
                         		}
                             	if (clientsConnected < 2) {
-                            		outputLine = playerName + " disconnected, game can not be started\n";
+                            		outputLine = "DN" + playerNum + "\n";
                             		gameLog += outputLine; // add output line to game log
-                            		if (gameLog.length() > 1000)
-                            			gameLog = gameLog.substring(0, 33) + gameLog.substring(gameLog.length()-977, gameLog.length()); // make gameLog at max 1000 characters
+                            		if (gameLog.length() > 100)
+                            			gameLog = gameLog.substring(0, 3) + gameLog.substring(gameLog.length()-97, gameLog.length()); // make gameLog at max 100 characters
                                     
                                     gameStarted = false;
                                     guessWord = "";
                             	} else {
-                            		outputLine = playerName + " quit game\n";
+                            		outputLine = "DS" + playerNum + "\n";
                             		gameLog += outputLine; // add output line to game log
-                            		if (gameLog.length() > 1000)
-                            			gameLog = gameLog.substring(0, 33) + gameLog.substring(gameLog.length()-977, gameLog.length()); // make gameLog at max 1000 characters
+                            		if (gameLog.length() > 100)
+                            			gameLog = gameLog.substring(0, 3) + gameLog.substring(gameLog.length()-97, gameLog.length()); // make gameLog at max 100 characters
                             	}
                             }
                             
@@ -209,27 +209,27 @@ public class WordGuessServer {
                             
                             else {
                             	if (!gameStarted) {
-                            		outputLine = "Game has not started yet\n";
+                            		outputLine = "GN\n";
                             		outBuffer=ByteBuffer.wrap(outputLine.getBytes()); 
                                     bytesSent = cchannel.write(outBuffer);    
                                     
                             	} else if (gameStartedBy.equals(cchannel.socket().toString())) {
-                            		outputLine = "You are not allowed to guess your own word!\n";
+                            		outputLine = "OG\n";
                                 	outBuffer=ByteBuffer.wrap(outputLine.getBytes()); 
                                     bytesSent = cchannel.write(outBuffer);      
                                     
                             	} else if (line.equals(guessWord)) {
-                            		String playerName = "";
+                            		int playerNum = -1;
                             		for (Player p : players) {
                             			if (p.playerSocketString.equals(cchannel.socket().toString())) {
-                            				playerName = p.playerName;
+                            				playerNum = p.playerNum;
                             				break;
                             			}
                             		}
-                            		outputLine = playerName + ": Correct guess: " + line.substring(0, line.length()-1) + ", game over\n";
+                            		outputLine = "CG" + playerNum + "-" + line.substring(0, line.length()-1) + "\n";
                             		gameLog += outputLine; // add output line to game log
-                            		if (gameLog.length() > 1000)
-                            			gameLog = gameLog.substring(0, 33) + gameLog.substring(gameLog.length()-977, gameLog.length()); // make gameLog at max 1000 characters
+                            		if (gameLog.length() > 100)
+                            			gameLog = gameLog.substring(0, 3) + gameLog.substring(gameLog.length()-97, gameLog.length()); // make gameLog at max 100 characters
                             		outBuffer=ByteBuffer.wrap(gameLog.getBytes()); 
                                     bytesSent = cchannel.write(outBuffer);
                                     
@@ -245,17 +245,17 @@ public class WordGuessServer {
                             			}                            			
                             		}
                             		
-                            		String playerName = "";
+                            		int playerNum = -1;
                             		for (Player p : players) {
                             			if (p.playerSocketString.equals(cchannel.socket().toString())) {
-                            				playerName = p.playerName;
+                            				playerNum = p.playerNum;
                             				break;
                             			}
                             		}
-                            		outputLine = playerName + ": Incorrect guess: " + line.substring(0, line.length()-1) + ", with " + correctLetters + " letters correct\n";
+                            		outputLine = "IG" + playerNum + "-" + line.substring(0, line.length()-1) + "-" + correctLetters + "\n";
                             		gameLog += outputLine; // add output line to game log
-                            		if (gameLog.length() > 1000)
-                            			gameLog = gameLog.substring(0, 33) + gameLog.substring(gameLog.length()-977, gameLog.length()); // make gameLog at max 1000 characters
+                            		if (gameLog.length() > 100)
+                            			gameLog = gameLog.substring(0, 3) + gameLog.substring(gameLog.length()-97, gameLog.length()); // make gameLog at max 100 characters
                             		outBuffer=ByteBuffer.wrap(gameLog.getBytes()); 
                                     bytesSent = cchannel.write(outBuffer);
                             	}
